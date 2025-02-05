@@ -160,7 +160,7 @@ def main():
         /* Download button styling */
         .download-button {
             display: inline-block;
-            background-color: #445549;
+            background-color: #e3e3e3;
             color: white;
             padding: 12px 24px;
             border-radius: 6px;
@@ -172,7 +172,7 @@ def main():
         }
 
         .download-button:hover {
-            background-color: #3a4840;
+            background-color: #a8a8a8;
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             transform: translateY(-1px);
         }
