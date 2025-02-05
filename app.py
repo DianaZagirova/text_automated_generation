@@ -1,5 +1,10 @@
 import streamlit as st
-from research_engine import ResearchEngine
+st.set_page_config(
+        page_title="Research Assistant",
+        page_icon="🔍",
+        layout="wide"
+    )
+
 from dotenv import load_dotenv
 import os
 import hashlib
@@ -10,11 +15,8 @@ import tempfile
 import markdown
 import re
 
-st.set_page_config(
-        page_title="Research Assistant",
-        page_icon="🔍",
-        layout="wide"
-    )
+from research_engine import ResearchEngine
+
     
 # Load environment variables
 load_dotenv()
@@ -248,6 +250,7 @@ def main():
             st.markdown("### Download Report")
             try:
                 with st.spinner("📑 Preparing PDF download..."):
+                    print(report.content)
                     pdf_content = engine.create_downloadable_report(report.content, engine.screenshots_dir)
                     if not isinstance(pdf_content, bytes):
                         pdf_content = pdf_content.encode()

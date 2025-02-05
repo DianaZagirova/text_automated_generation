@@ -209,7 +209,7 @@ class ResearchEngine:
             1. Perform analysis step-by-step. Address each step in the research plan systematically.
             2. Most important: you have to rely on retrieved informaiton from web_search tool. For that, create a query for each step in the plan. Get relevant information for this step. If additional research is needed, create another query. 
             3. You might use tool more than 1 time per each step. 
-            4. When you extracted relevant information, you have to cite sources inline. Use this format: [Title](URL).
+            4. When you extracted relevant information, you have to cite sources inline at the end of the sentence. Use this format: sentence [Source](URL), where Source is the name of the source website (e.g. PubMed, ScienceDirect).
             5. Integrate information from multiple sources when possible.
             6. Never include the separate reference section. All citaitons should be mentioned directly in the text.
             7. Structure your response with appropriate headings (## Section Name)
@@ -470,21 +470,28 @@ class ResearchEngine:
                     if screenshot_path:
                         sentence_end = url_info['sentence_end'] + content_length_change
                         
-                        # Add newline and screenshot with proper HTML formatting for display
-                        with open(screenshot_path, "rb") as img_file:
-                            img_data = base64.b64encode(img_file.read()).decode()
-                            # Add title to the sentence before the image
-                            content = (
-                                content[:sentence_end] + 
-                                f" ({title})" +  # Add source name in the sentence
-                                "\n\n" +
-                                f'<div class="image-container">\n'
-                                f'<img src="data:image/png;base64,{img_data}" alt="Screenshot from {title}"/>\n'
-                                f'<em>Source: {title}</em>\n'
-                                f'</div>\n\n' +
-                                content[sentence_end:]
-                            )
-                            content_length_change += len(f" ({title})\n\n<div class=\"image-container\">\n<img src=\"data:image/png;base64,{img_data}\" alt=\"Screenshot from {title}\"/>\n<em>Source: {title}</em>\n</div>\n\n")
+                        # Find the position after the last link in this sentence
+                        sentence = content[url_info['sentence_start']:sentence_end]
+                        last_link_end = 0
+                        for match in re.finditer(r'\[([^\]]+)\]\(([^\)]+)\)', sentence):
+                            last_link_end = match.end()
+                        
+                        # Insert image after the last link or at sentence end
+                        insert_pos = sentence_end
+                        if last_link_end > 0:
+                            insert_pos = url_info['sentence_start'] + last_link_end
+                        
+                        # Add title and image
+                        image_html = (                            
+                            "\n\n" +
+                            f'<div class="image-container">\n'
+                            f'<img src="data:image/png;base64,{base64.b64encode(open(screenshot_path, "rb").read()).decode()}" alt="Screenshot from {title}"/>\n'
+                            f'<em>Source: {title}</em>\n'
+                            f'</div>\n\n'
+                        )
+                        
+                        content = content[:insert_pos] + image_html + content[insert_pos:]
+                        content_length_change += len(image_html)
                     
                     sources.append(Source(
                         url=url,
@@ -573,18 +580,53 @@ class ResearchEngine:
             for i in range(0, len(parts)):
                 if i % 3 == 0:  # Text content
                     if parts[i].strip():
-                        # Convert markdown to HTML
-                        html = markdown.markdown(parts[i])
-                        # Process links
-                        html = re.sub(
-                            r'\[([^\]]+)\]\(([^\)]+)\)',
-                            r'<link href="\2" color="#445549"><u>\1</u></link>',
-                            html
-                        )
-                        # Convert the HTML to plain text for ReportLab
-                        soup = BeautifulSoup(html, 'html.parser')
-                        text = soup.get_text()
-                        story.append(Paragraph(text, normal_style))
+                        # Split text into paragraphs
+                        paragraphs = parts[i].split('\n')
+                        for paragraph in paragraphs:
+                            if not paragraph.strip():
+                                continue
+                            
+                            # Process headers
+                            header_match = re.match(r'^##\s+(.+)$', paragraph)
+                            if header_match:
+                                header_text = header_match.group(1).strip()
+                                story.append(Spacer(1, 12))
+                                story.append(Paragraph(header_text, heading_style))
+                                story.append(Spacer(1, 8))
+                                continue
+                            
+                            # Process regular paragraphs with links
+                            # Convert markdown to HTML
+                            html = markdown.markdown(paragraph)
+                            
+                            # Process markdown links more carefully
+                            def process_links(text):
+                                # Keep track of all link positions to avoid overlapping replacements
+                                links = []
+                                for match in re.finditer(r'\[([^\]]+)\]\(([^\)]+)\)', text):
+                                    links.append((match.start(), match.end(), match.group(1), match.group(2)))
+                                
+                                # Replace links from end to start to maintain string indices
+                                result = text
+                                for start, end, title, url in reversed(links):
+                                    link_html = f'<font color="blue">[<link href="{url}" color="blue">{title}</link>]</font>'
+                                    result = result[:start] + link_html + result[end:]
+                                
+                                return result
+                            
+                            # Process links in text
+                            html = process_links(paragraph)
+                            
+                            # Create paragraph with proper styling
+                            para_style = ParagraphStyle(
+                                'CustomParagraph',
+                                parent=normal_style,
+                                textColor='#2a2a2a',
+                                spaceAfter=12,
+                                leading=16
+                            )
+                            story.append(Paragraph(html, para_style))
+                            story.append(Spacer(1, 4))
                 elif i % 3 == 1:  # Image data
                     try:
                         # Process image
