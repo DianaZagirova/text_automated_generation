@@ -1,0 +1,6 @@
+.env
+**.png
+**.ipynb
+**.txt
+.DS_Store
+**__pycache__/
