@@ -150,9 +150,7 @@ def take_screenshots(url: str, screenshots_dir: str) -> Optional[str]:
                     return None
 
                 return filepath
-            except PlaywrightTimeoutError:
-                print(f"Timeout loading {url}")
-                return None
+            
             except Exception as e:
                 print(f"Error capturing {url}: {str(e)}")
                 return None

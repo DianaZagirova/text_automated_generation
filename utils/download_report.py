@@ -8,7 +8,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as Re
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-# Define styles outside the function so they can be reused
 styles = getSampleStyleSheet()
 
 title_style = ParagraphStyle(
@@ -68,7 +67,6 @@ def process_html_links(html: str) -> str:
     for m in reversed(matches):
         url = m.group(1)
         text = m.group(2)
-        # Example: <font color="blue"><link href="URL">Text</link></font>
         pdf_link = f'<font color="blue"><link href="{url}">{text}</link></font>'
         start, end = m.span()
         html = html[:start] + pdf_link + html[end:]

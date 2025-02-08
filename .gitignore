@@ -1,6 +1,61 @@
-.env
-**.png
-**.ipynb
-**.txt
+# OS-specific files
 .DS_Store
-**__pycache__/
+Thumbs.db
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environment directories
+venv/
+env/
+.venv/
+ENV/
+
+# Common Python tools
+.eggs/
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter notebooks
+**.ipynb
+
+# Image files
+**.png
+
+# Text files
+**.txt
+
+# Environment & configuration
+.env
+*.env.*
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+# MyPy
+.mypy_cache/
+
+# PyTest
+.pytest_cache/
+
+# VSCode and other IDE settings (optional)
+.vscode/
+*.code-workspace
+
+# Miscellaneous
+*.lock
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
