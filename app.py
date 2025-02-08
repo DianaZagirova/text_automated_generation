@@ -38,14 +38,14 @@ def main():
         st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY")
     else:
         with st.sidebar:
-            openai_key = st.text_input("OpenAI API Key:")
+            openai_key = st.text_input("OpenAI API Key:",value=st.session_state.openai_api_key, type="password")
             if openai_key:
                 if not openai_key.startswith('sk-') :
                     st.error("Please enter a valid OpenAI API key. It should start with 'sk-'.")
                 else:
                     st.session_state.openai_api_key = openai_key
             
-            st.session_state.tavily_api_key = st.text_input("Tavily API Key:")
+            st.session_state.tavily_api_key = st.text_input("Tavily API Key:", value=st.session_state.tavily_api_key, type="password")
             st.caption("Tavily is an optional key for web search")
             st.caption("Get your API key from https://tavily.com/")
 
