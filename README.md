@@ -26,6 +26,7 @@ docker compose up
 
 The application will be available at `http://localhost:8511`
 
+Example app - https://dianazagirova-text-automated-generation-app-text-share-oqqy3z.streamlit.app/?embed_options=show_toolbar
 
 ## 💡 Usage2. Access the web interface:
    - Docker Compose: `http://localhost:8511`
