@@ -14,8 +14,11 @@ from research_engine import ResearchEngine
 from utils.formatting import apply_formatting
 from utils.download_report import create_downloadable_report
 from utils.social_share import create_share_section
+from utils.init_states import init_states
+
 load_dotenv()
 apply_formatting()
+init_states()
 
 def get_download_link(content, filename, mime_type):
     """Generate a download link for the content."""
@@ -23,11 +26,18 @@ def get_download_link(content, filename, mime_type):
     href = f'data:{mime_type};base64,{b64_content}'
     return f'<a href="{href}" class="download-button" download="{filename}">📥 Download PDF Report</a>'
 
-def main():   
+def main():      
     
+    st.title("🔍 AI Researcher")   
+    if st.session_state.app_mode == "dev":
+        st.session_state.tavily_api_key = os.getenv("TAVILY_API_KEY")
+        st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY")
+    else:
+        st.session_state.tavily_api_key = st.input_text("Tavily API Key:")
+        st.session_state.openai_api_key = st.input_text("OpenAI API Key:")
+    if not st.session_state.tavily_api_key or not st.session_state.openai_api_key:
+        return
     
-    st.title("🔍 AI Researcher")    
-
     with st.container():
         col1, col2 = st.columns([5,1])
         with col1:
