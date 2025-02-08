@@ -33,7 +33,7 @@ def main():
         with col1:
             query = st.text_area("Enter your research topic:", height=100)
         with col2:
-            report_type = st.radio("Select a report type:", ["Brief report", "Twitter post"], horizontal=True)
+            report_type = st.radio("Select a report type:", [ "Twitter post" , "Brief report"], horizontal=True)
         
         if st.button("🚀 Generate Report", type="primary", use_container_width=True):
             if not query:
