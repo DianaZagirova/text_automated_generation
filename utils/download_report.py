@@ -152,11 +152,19 @@ def create_downloadable_report(content: str, images_dir: str) -> bytes:
                     img_buffer = BytesIO(img_bytes)
                     pil_img = Image.open(img_buffer)
 
-                    max_width = 450
+                    # Calculate dimensions that fit within PDF page
+                    max_width = 450  # Max width for letter page with margins
+                    max_height = 600  # Max height to ensure it fits on one page
                     width, height = pil_img.size
-                    if width > max_width:
-                        ratio = max_width / width
-                        width = max_width
+
+                    # Calculate scaling ratio to fit both width and height constraints
+                    width_ratio = max_width / width if width > max_width else 1
+                    height_ratio = max_height / height if height > max_height else 1
+                    ratio = min(width_ratio, height_ratio)
+
+                    # Apply scaling
+                    if ratio < 1:
+                        width = int(width * ratio)
                         height = int(height * ratio)
 
                     # Add image to story

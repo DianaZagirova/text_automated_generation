@@ -50,6 +50,7 @@ def main():
             st.caption("Get your API key from https://tavily.com/")
 
     if not st.session_state.openai_api_key:
+        st.warning("Please enter your OpenAI API key to start!")
         return
     
     with st.container():
@@ -116,7 +117,6 @@ def main():
                     if not hasattr(st.session_state, 'engine'):
                         st.error("Research engine not initialized. Please generate a report first.")
                         return
-                    print(report.content)
                     pdf_content = create_downloadable_report(report.content, st.session_state.engine.screenshots_dir)
                     if not isinstance(pdf_content, bytes):
                         pdf_content = pdf_content.encode()                    

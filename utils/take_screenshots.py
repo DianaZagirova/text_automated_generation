@@ -39,14 +39,14 @@ def take_screenshots(url: str, screenshots_dir: str) -> Optional[str]:
             # 2. Launch the browser
             browser = p.chromium.launch(headless=True)
             
+            # Set a reasonable viewport size
             context = browser.new_context(
-                viewport={"width": 1280, "height": 720},
+                viewport={"width": 1024, "height": 768},  # Standard resolution
                 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
                 extra_http_headers={
                     'Accept-Language': 'en-US,en;q=0.9',
                     'Referer': 'https://www.google.com/'
                 },
-                # Enable adblocker
                 bypass_csp=True
             )
             
@@ -77,7 +77,7 @@ def take_screenshots(url: str, screenshots_dir: str) -> Optional[str]:
                 page.on("response", check_response)
 
                 # Navigate with extended timeout and wait for DOM stability
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 
                 # Check for HTTP errors first
                 if status_code[0] and status_code[0] >= 400:
@@ -91,15 +91,19 @@ def take_screenshots(url: str, screenshots_dir: str) -> Optional[str]:
                     timeout=30000
                 )
 
-                # Check for common error pages using XPath
+                # Check for common error pages using text content
                 error_texts = [
                     "403", "404", "forbidden", "not found", "error",
                     "service unavailable", "access denied", "gateway timeout"
                 ]
-                error_xpath = "|".join([f"contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{text}')" 
-                                      for text in error_texts])
-                error_element = page.query_selector(f"xpath=//*[{error_xpath}]")
-                if error_element:
+                
+                # Get page text content
+                page_text = page.evaluate("""
+                    () => document.body.innerText.toLowerCase()
+                """)
+                
+                # Check if any error text is present
+                if any(error in page_text.lower() for error in error_texts):
                     print(f"Error content detected on {url}")
                     return None
 
@@ -134,15 +138,54 @@ def take_screenshots(url: str, screenshots_dir: str) -> Optional[str]:
                     mainContent.style.opacity = '1';
                 }""")
 
-                # Take full-page screenshot with quality adjustments
+                # Set viewport and scroll to capture main content
+                page.evaluate("""
+                    () => {
+                        // Set max dimensions
+                        const maxWidth = 800;
+                        const maxHeight = 600;
+                        
+                        // Find main content
+                        const main = document.querySelector('main, article, [role="main"]') || document.body;
+                        
+                        // Get content dimensions
+                        const rect = main.getBoundingClientRect();
+                        const contentHeight = Math.min(rect.height, maxHeight);
+                        const contentWidth = Math.min(rect.width, maxWidth);
+                        
+                        // Scroll to content
+                        main.scrollIntoView();
+                        
+                        return {
+                            width: contentWidth,
+                            height: contentHeight
+                        };
+                    }
+                """)
+                
+                # Wait for any scrolling to settle
+                page.wait_for_timeout(500)
+                
+                # Take screenshot with fixed dimensions
+                               
                 screenshot_params = {
                     'path': filepath,
-                    'full_page': True,
+                    'full_page': False,
                     'quality': 90,
                     'animations': 'disabled',
                     'mask': page.query_selector_all('[aria-hidden="true"]')
                 }
                 page.screenshot(**screenshot_params)
+
+                # page.screenshot(
+                #     path=filepath,
+                #     clip={
+                #         "x": 0,
+                #         "y": 0,
+                #         "width": 800,  # Fixed width
+                #         "height": 600  # Fixed height
+                #     }
+                # )
 
                 # Verify screenshot content
                 if not is_valid_screenshot(filepath):
