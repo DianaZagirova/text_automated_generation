@@ -1,6 +1,12 @@
 # 🔍 Web Research Assistant
 
 Transform your research process with this powerful Streamlit application that leverages the intelligence of LangChain Agents and the latest AI technology to create comprehensive, well-structured reports from web sources. What sets this tool apart is its ability to not just gather information, but also automatically capture and include relevant images from source websites, making your reports more engaging and informative.
+## App Demo
+
+
+https://github.com/user-attachments/assets/470e908a-eeb6-4d96-a3d4-21555a2646f0
+
+
 
 ## ✨ Features
 
