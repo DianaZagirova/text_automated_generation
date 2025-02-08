@@ -16,7 +16,7 @@ from utils.take_screenshots import take_screenshots
 import json
 import requests
 
-tavily_api_key=os.getenv("TAVILY_API_KEY")
+tavily_api_key=st.session_state.tavily_api_key
 
 callback_handler = StreamlitCallbackHandler(
                 parent_container=st.container(),
@@ -28,20 +28,20 @@ callback_handler = StreamlitCallbackHandler(
 class ResearchEngine:
     """Research engine that generates comprehensive reports."""
 
-    def __init__(self, report_type, openai_api_key=None, tavily_api_key=None, max_sources=5, include_images=True, model="gpt-4o-mini", temperature=0.5):
+    def __init__(self, report_type, openai_api_key=None, tavily_api_key=None, max_sources=5, include_images=st.session_state.include_images, model="gpt-4o-mini", temperature=0.5):
         """Initialize the research engine."""
         load_dotenv()     
         
 
-        types_mapping = {"Brief report":'research', "Twitter post":"x_post"}  
+        types_mapping = {"Brief report":'research', "Twitter post":"x_post", "Custom format": 'custom'}
         
-        self.openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
-        self.tavily_api_key = tavily_api_key or os.getenv("TAVILY_API_KEY")
+        self.openai_api_key = openai_api_key or st.session_state.openai_api_key
+        self.tavily_api_key = tavily_api_key or st.session_state.tavily_api_key
         
         if not self.openai_api_key:
             raise ValueError("OpenAI API key is required. Set it in .env file or pass to constructor.")
-        if not self.tavily_api_key:
-            raise ValueError("Tavily API key is required. Set it in .env file or pass to constructor.")
+        # if not self.tavily_api_key:
+        #     raise ValueError("Tavily API key is required. Set it in .env file or pass to constructor.")
         
         self.max_sources = max_sources
         self.include_images = include_images
@@ -51,8 +51,13 @@ class ResearchEngine:
         
         self.prompts = json.load(open("./prompts/prompts.json", "r"))
         self.report_type = types_mapping.get(report_type)
-        self.plan_prompt = self.prompts[self.report_type]["plan_prompt"]
-        self.prompt = self.prompts[self.report_type]["prompt"] 
+        
+        if self.report_type == 'custom':
+            self.prompt = st.session_state.custom_prompt
+            self.plan_prompt = self.prompts[self.report_type]["plan_prompt"]
+        else:
+            self.plan_prompt = self.prompts[self.report_type]["plan_prompt"]
+            self.prompt = self.prompts[self.report_type]["prompt"]
         
 
         os.makedirs(self.screenshots_dir, exist_ok=True)
@@ -87,7 +92,12 @@ class ResearchEngine:
     def setup_agent(self, process_container: st.container) -> AgentExecutor:
         """Set up the LangChain agent with necessary tools and prompt."""
 
-        search_tool = SearchTool(callback_handler=callback_handler)
+        if st.session_state.tavily_api_key:
+            search_tool = SearchTool(callback_handler=callback_handler)
+        else:
+            from langchain_community.tools import DuckDuckGoSearchRun
+            search_tool = DuckDuckGoSearchRun(callback_handler=callback_handler)
+
         tools = [search_tool]
 
         prompt = ChatPromptTemplate.from_messages([

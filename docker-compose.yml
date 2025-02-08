@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: websearch_app
+    ports:
+      - "8511:8511"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    ipc: host
+    command: [ "/bin/bash", "-c", "pip install -r requirements.txt && streamlit run app.py --server.port=8511 --server.address=0.0.0.0" ]
+    restart: unless-stopped
+    security_opt:
+      - seccomp=seccomp_profile.json

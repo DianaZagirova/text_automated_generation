@@ -5,20 +5,24 @@ st.set_page_config(
         layout="wide"
     )
 
+from utils.init_states import init_states
+init_states()
+
 from dotenv import load_dotenv
 import os
 import base64
+import json
 from datetime import datetime
 
 from research_engine import ResearchEngine
 from utils.formatting import apply_formatting
 from utils.download_report import create_downloadable_report
 from utils.social_share import create_share_section
-from utils.init_states import init_states
+
 
 load_dotenv()
 apply_formatting()
-init_states()
+
 
 def get_download_link(content, filename, mime_type):
     """Generate a download link for the content."""
@@ -33,9 +37,19 @@ def main():
         st.session_state.tavily_api_key = os.getenv("TAVILY_API_KEY")
         st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY")
     else:
-        st.session_state.tavily_api_key = st.input_text("Tavily API Key:")
-        st.session_state.openai_api_key = st.input_text("OpenAI API Key:")
-    if not st.session_state.tavily_api_key or not st.session_state.openai_api_key:
+        with st.sidebar:
+            openai_key = st.text_input("OpenAI API Key:")
+            if openai_key:
+                if not openai_key.startswith('sk-') :
+                    st.error("Please enter a valid OpenAI API key. It should start with 'sk-'.")
+                else:
+                    st.session_state.openai_api_key = openai_key
+            
+            st.session_state.tavily_api_key = st.text_input("Tavily API Key:")
+            st.caption("Tavily is an optional key for web search")
+            st.caption("Get your API key from https://tavily.com/")
+
+    if not st.session_state.openai_api_key:
         return
     
     with st.container():
@@ -43,9 +57,16 @@ def main():
         with col1:
             query = st.text_area("Enter your research topic:", height=100)
         with col2:
-            report_type = st.radio("Select a report type:", [ "Twitter post" , "Brief report"], horizontal=True)
+            report_type = st.radio("Select a report type:", ["Twitter post", "Brief report", "Custom format"], horizontal=False)
+            if report_type == "Custom format":
+                with open("./prompts/prompts.json", "r") as f:
+                    prompts = json.load(f)
+                
+                with col1:
+                    st.session_state.custom_prompt = st.text_area("Enter your custom prompt:", prompts["custom"]["prompt"], height = 180)
         
         if st.button("🚀 Generate Report", type="primary", use_container_width=True):
+            
             if not query:
                 st.error("Please enter a research topic")
                 return            
@@ -72,6 +93,7 @@ def main():
         
         # Create tabs for process and results
         process_tab, report_tab, sources_tab = st.tabs(["🔄 Agent's thoughts", "📝 Report", "📚 Sources"])
+        
         
         with process_tab:
             st.markdown("### Research Progress")
